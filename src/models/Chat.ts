@@ -1,6 +1,6 @@
 import { Schema, model, models, type Document, type Model, Types } from 'mongoose';
 
-export type ChatType = 'direct' | 'group';
+export type ChatType = 'direct' | 'group' | 'channel';
 export type MemberRole = 'owner' | 'admin' | 'moderator' | 'member';
 
 export interface IChatMember {
@@ -13,17 +13,13 @@ export interface IChatMember {
   lastReadMessageId?: Types.ObjectId;
   lastReadAt?: Date;
   archivedAt?: Date;
-  pinnedAt?: Date; // chat pinned in this member's sidebar
+  pinnedAt?: Date;
 }
 
 export interface IChat extends Document {
   _id: Types.ObjectId;
   type: ChatType;
-
-  // Direct-chat helper: sorted pair of user ids for fast lookup of existing 1:1 chats
   directKey?: string;
-
-  // Group fields
   name?: string;
   description?: string;
   avatarFileId?: Types.ObjectId;
@@ -31,14 +27,11 @@ export interface IChat extends Document {
   inviteCode?: string;
   slowModeSeconds?: number;
   requireJoinApproval?: boolean;
-
   members: IChatMember[];
   pendingJoinRequests: Types.ObjectId[];
-
   pinnedMessageIds: Types.ObjectId[];
   lastMessageId?: Types.ObjectId;
   lastMessageAt?: Date;
-
   createdBy: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -62,9 +55,8 @@ const chatMemberSchema = new Schema<IChatMember>(
 
 const chatSchema = new Schema<IChat>(
   {
-    type: { type: String, enum: ['direct', 'group'], required: true },
+    type: { type: String, enum: ['direct', 'group', 'channel'], required: true },
     directKey: { type: String, index: true, sparse: true, unique: true },
-
     name: { type: String, maxlength: 128 },
     description: { type: String, maxlength: 512 },
     avatarFileId: { type: Schema.Types.ObjectId, ref: 'File' },
@@ -72,14 +64,11 @@ const chatSchema = new Schema<IChat>(
     inviteCode: { type: String, index: true, sparse: true },
     slowModeSeconds: { type: Number, default: 0 },
     requireJoinApproval: { type: Boolean, default: false },
-
     members: { type: [chatMemberSchema], default: [] },
     pendingJoinRequests: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-
     pinnedMessageIds: [{ type: Schema.Types.ObjectId, ref: 'Message' }],
     lastMessageId: { type: Schema.Types.ObjectId, ref: 'Message' },
     lastMessageAt: { type: Date, index: true },
-
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },
   { timestamps: true },
@@ -88,7 +77,6 @@ const chatSchema = new Schema<IChat>(
 chatSchema.index({ 'members.userId': 1, lastMessageAt: -1 });
 chatSchema.index({ name: 'text', description: 'text' });
 
-/** Builds a deterministic key for a direct chat so duplicates can't be created. */
 export function buildDirectKey(userIdA: string, userIdB: string): string {
   return [userIdA, userIdB].sort().join('_');
 }
