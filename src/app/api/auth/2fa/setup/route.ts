@@ -11,7 +11,7 @@ export async function POST() {
   await connectDB();
 
   const secret = speakeasy.generateSecret({
-    name: `${process.env.TWO_FACTOR_APP_NAME || 'TelegramClone'} (${ctx.user.username})`,
+    name: `${process.env.TWO_FACTOR_APP_NAME || 'StdGram'} (${ctx.user.username})`,
   });
 
   // Store secret but keep 2FA disabled until the user verifies a code
