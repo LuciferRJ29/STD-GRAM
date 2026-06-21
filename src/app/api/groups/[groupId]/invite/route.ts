@@ -12,7 +12,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ groupI
   await connectDB();
 
   const access = await getChatForMember(groupId, String(ctx.user._id));
-  if (!access || access.chat.type !== 'group') return Response.json({ error: 'Group not found' }, { status: 404 });
+  if (!access || !['group','channel'].includes(access.chat.type)) return Response.json({ error: 'Group not found' }, { status: 404 });
   if (!hasRoleAtLeast(access.member, 'admin')) {
     return Response.json({ error: 'Admin role required' }, { status: 403 });
   }
