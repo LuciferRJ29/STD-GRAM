@@ -50,7 +50,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ chatId
 
   const access = await getChatForMember(chatId, String(ctx.user._id));
   if (!access) return Response.json({ error: 'Chat not found' }, { status: 404 });
-  if (access.chat.type !== 'group') return Response.json({ error: 'Only groups can be updated' }, { status: 400 });
+  if (!['group', 'channel'].includes(access.chat.type)) {
+    return Response.json({ error: 'Only groups and channels can be updated' }, { status: 400 });
+  }
   if (!hasRoleAtLeast(access.member, 'admin')) {
     return Response.json({ error: 'Admin role required' }, { status: 403 });
   }
@@ -75,13 +77,11 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ chat
   const access = await getChatForMember(chatId, String(ctx.user._id));
   if (!access) return Response.json({ error: 'Chat not found' }, { status: 404 });
 
-  // Leaving a group removes membership; leaving a direct chat just archives it for you.
-  if (access.chat.type === 'group') {
+  if (access.chat.type === 'group' || access.chat.type === 'channel') {
     access.chat.members = access.chat.members.filter((m) => String(m.userId) !== String(ctx.user._id));
     if (access.chat.members.length === 0) {
       await access.chat.deleteOne();
     } else {
-      // Promote the oldest remaining admin/member to owner if the owner left.
       if (access.member.role === 'owner' && !access.chat.members.some((m) => m.role === 'owner')) {
         const successor =
           access.chat.members.find((m) => m.role === 'admin') || access.chat.members[0];
