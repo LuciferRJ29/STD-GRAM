@@ -11,7 +11,7 @@ export interface UserSummary {
 
 export interface ChatListItem {
   id: string;
-  type: 'direct' | 'group';
+  type: 'direct' | 'group' | 'channel';
   name?: string;
   username?: string;
   avatarFileId?: string;
