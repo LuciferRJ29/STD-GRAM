@@ -3,6 +3,7 @@
 import { useRouter, useParams } from 'next/navigation';
 import { formatDistanceToNowStrict } from 'date-fns';
 import clsx from 'clsx';
+import { Megaphone } from 'lucide-react';
 import { Avatar } from '@/components/ui/Avatar';
 import type { ChatListItem } from '@/types';
 
@@ -29,7 +30,10 @@ export function ChatListItemRow({ chat }: { chat: ChatListItem }) {
       <Avatar name={title} fileId={chat.avatarFileId} isOnline={chat.type === 'direct' ? chat.isOnline : undefined} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="truncate font-medium text-zinc-900 dark:text-zinc-100">{title}</span>
+          <span className="flex items-center gap-1 truncate font-medium text-zinc-900 dark:text-zinc-100">
+            {chat.type === 'channel' && <Megaphone size={13} className="shrink-0 text-brand-500" />}
+            {title}
+          </span>
           {chat.lastMessageAt && (
             <span className="shrink-0 text-xs text-zinc-400">
               {formatDistanceToNowStrict(new Date(chat.lastMessageAt), { addSuffix: false })}
