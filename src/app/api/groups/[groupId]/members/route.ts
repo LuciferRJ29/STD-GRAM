@@ -12,7 +12,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ groupId
   await connectDB();
 
   const access = await getChatForMember(groupId, String(ctx.user._id));
-  if (!access || access.chat.type !== 'group') return Response.json({ error: 'Group not found' }, { status: 404 });
+  if (!access || !['group','channel'].includes(access.chat.type)) return Response.json({ error: 'Group not found' }, { status: 404 });
   if (!hasRoleAtLeast(access.member, 'admin')) {
     return Response.json({ error: 'Admin role required' }, { status: 403 });
   }
@@ -58,7 +58,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ groupI
   await connectDB();
 
   const access = await getChatForMember(groupId, String(ctx.user._id));
-  if (!access || access.chat.type !== 'group') return Response.json({ error: 'Group not found' }, { status: 404 });
+  if (!access || !['group','channel'].includes(access.chat.type)) return Response.json({ error: 'Group not found' }, { status: 404 });
 
   const body = await req.json().catch(() => null);
   const parsed = updateMemberRoleSchema.safeParse(body);
@@ -67,7 +67,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ groupI
   const target = access.chat.members.find((m) => String(m.userId) === parsed.data.userId);
   if (!target) return Response.json({ error: 'Member not found' }, { status: 404 });
 
-  // Only an owner can grant/revoke admin or owner; admins can manage moderator/member.
   const actingMinRole = ['owner', 'admin'].includes(parsed.data.role) ? 'owner' : 'admin';
   if (!hasRoleAtLeast(access.member, actingMinRole as any)) {
     return Response.json({ error: 'Insufficient permissions for this role change' }, { status: 403 });
@@ -95,7 +94,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ group
   await connectDB();
 
   const access = await getChatForMember(groupId, String(ctx.user._id));
-  if (!access || access.chat.type !== 'group') return Response.json({ error: 'Group not found' }, { status: 404 });
+  if (!access || !['group','channel'].includes(access.chat.type)) return Response.json({ error: 'Group not found' }, { status: 404 });
   if (!hasRoleAtLeast(access.member, 'moderator')) {
     return Response.json({ error: 'Moderator role required' }, { status: 403 });
   }
