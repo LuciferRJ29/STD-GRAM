@@ -1,10 +1,11 @@
 import { z } from 'zod';
 
 export const createChatSchema = z.object({
-  type: z.enum(['direct', 'group']),
-  participantIds: z.array(z.string()).min(1),
-  name: z.string().min(1).max(128).optional(), // required for groups
+  type: z.enum(['direct', 'group', 'channel']),
+  participantIds: z.array(z.string()).default([]),
+  name: z.string().min(1).max(128).optional(), // required for groups/channels
   description: z.string().max(512).optional(),
+  isPublic: z.boolean().optional().default(false),
 });
 
 export const sendMessageSchema = z.object({
@@ -32,6 +33,8 @@ export const updateGroupSchema = z.object({
   name: z.string().min(1).max(128).optional(),
   description: z.string().max(512).optional(),
   slowModeSeconds: z.number().min(0).max(3600).optional(),
+  isPublic: z.boolean().optional(),
+  requireJoinApproval: z.boolean().optional(),
 });
 
 export const addMembersSchema = z.object({
