@@ -12,7 +12,7 @@ export async function POST(req: Request) {
   if (!inviteCode) return Response.json({ error: 'inviteCode is required' }, { status: 400 });
 
   await connectDB();
-  const chat = await Chat.findOne({ inviteCode, type: 'group' });
+  const chat = await Chat.findOne({ inviteCode, type: { $in: ['group', 'channel'] } });
   if (!chat) return Response.json({ error: 'Invalid or expired invite link' }, { status: 404 });
 
   const alreadyMember = chat.members.some((m) => String(m.userId) === String(ctx.user._id));
@@ -37,5 +37,5 @@ export async function POST(req: Request) {
   } as any);
   await chat.save();
 
-  return Response.json({ chatId: String(chat._id), message: 'Joined group' });
+  return Response.json({ chatId: String(chat._id), message: chat.type === 'channel' ? 'Joined channel' : 'Joined group' });
 }
