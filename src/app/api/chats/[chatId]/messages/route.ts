@@ -75,6 +75,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cha
     return Response.json({ error: 'Slow mode is active. Please wait before sending again.' }, { status: 429 });
   }
 
+  if (access.chat.type === 'channel' && !hasRoleAtLeast(access.member, 'admin')) {
+    return Response.json({ error: 'Only channel admins can post. Subscribers can view but not send.' }, { status: 403 });
+  }
+
   let mentionUserIds: Types.ObjectId[] = [];
   let hashtags: string[] = [];
   let forwardedFromChatId: Types.ObjectId | undefined;
@@ -120,7 +124,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cha
     readBy: [ctx.user._id],
   });
 
-  // Mark attached files as referenced (dedup bookkeeping)
   if (finalFileIds.length) {
     await File.updateMany({ _id: { $in: finalFileIds } }, { isOrphaned: false, $inc: { refCount: 1 } });
   }
@@ -128,7 +131,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cha
   if (!isScheduled) {
     await Chat.updateOne({ _id: chatId }, { lastMessageId: message._id, lastMessageAt: message.createdAt });
 
-    // Notify mentioned users + (for direct chats) the other participant.
     const recipientIds = access.chat.members
       .map((m) => String(m.userId))
       .filter((id) => id !== String(ctx.user._id));
