@@ -22,14 +22,14 @@ export async function GET() {
       chat.type === 'direct'
         ? chat.members.find((m) => String(m.userId._id || m.userId) !== String(ctx.user._id))
         : null;
+    const isGroupLike = chat.type === 'group' || chat.type === 'channel';
 
     return {
       id: String(chat._id),
       type: chat.type,
-      name: chat.type === 'group' ? chat.name : (otherMember?.userId as any)?.displayName,
+      name: isGroupLike ? chat.name : (otherMember?.userId as any)?.displayName,
       username: chat.type === 'direct' ? (otherMember?.userId as any)?.username : undefined,
-      avatarFileId:
-        chat.type === 'group' ? chat.avatarFileId : (otherMember?.userId as any)?.avatarFileId,
+      avatarFileId: isGroupLike ? chat.avatarFileId : (otherMember?.userId as any)?.avatarFileId,
       isOnline: chat.type === 'direct' ? (otherMember?.userId as any)?.isOnline : undefined,
       lastMessage: chat.lastMessageId
         ? {
@@ -40,10 +40,10 @@ export async function GET() {
           }
         : null,
       lastMessageAt: chat.lastMessageAt,
-      unreadCount: 0, // computed client-side from lastReadMessageId vs latest, kept here for future server-side calc
+      unreadCount: 0,
       isArchived: !!me?.archivedAt,
       isPinned: !!me?.pinnedAt,
-      memberCount: chat.type === 'group' ? chat.members.length : undefined,
+      memberCount: isGroupLike ? chat.members.length : undefined,
       role: me?.role,
     };
   });
@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: 'Invalid input', issues: parsed.error.flatten() }, { status: 400 });
   }
 
-  const { type, participantIds, name, description } = parsed.data;
+  const { type, participantIds, name, description, isPublic } = parsed.data;
   await connectDB();
 
   if (type === 'direct') {
@@ -97,9 +97,13 @@ export async function POST(req: NextRequest) {
     return Response.json({ chat: { id: String(chat._id), type: chat.type } }, { status: 201 });
   }
 
-  // Group creation
+  // Group or channel creation - both support being created solo (no other
+  // members required upfront), matching Telegram's "create, then invite later" flow.
   if (!name) {
-    return Response.json({ error: 'Group name is required' }, { status: 400 });
+    return Response.json(
+      { error: type === 'channel' ? 'Channel name is required' : 'Group name is required' },
+      { status: 400 },
+    );
   }
 
   const members = [
@@ -116,10 +120,11 @@ export async function POST(req: NextRequest) {
   ];
 
   const chat = await Chat.create({
-    type: 'group',
+    type,
     name,
     description,
     members,
+    isPublic: type === 'channel' ? isPublic : false,
     createdBy: ctx.user._id,
   });
 
