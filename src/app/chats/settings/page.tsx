@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Shield, Smartphone, Lock, User } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -19,6 +19,8 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [bio, setBio] = useState(user?.bio || '');
   const [isSaving, setIsSaving] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
 
   const [sessions, setSessions] = useState<any[]>([]);
   const [privacy, setPrivacy] = useState<any>(null);
@@ -40,6 +42,23 @@ export default function SettingsPage() {
     await api.patch('/api/users/me', { displayName, bio });
     await refresh();
     setIsSaving(false);
+  }
+
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingAvatar(true);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    const uploadRes = await api.upload('/api/upload', formData);
+
+    if (uploadRes.ok) {
+      await api.patch('/api/users/me', { avatarFileId: uploadRes.data.file._id });
+      await refresh();
+    }
+    setIsUploadingAvatar(false);
+    e.target.value = '';
   }
 
   async function savePrivacy(key: string, value: string) {
@@ -98,7 +117,25 @@ export default function SettingsPage() {
         <div className="scroll-thin flex-1 overflow-y-auto p-6">
           {tab === 'profile' && (
             <div className="max-w-sm space-y-4">
-              <Avatar name={user?.displayName || ''} fileId={user?.avatarFileId} size={72} />
+              <div className="flex items-center gap-4">
+                <Avatar name={user?.displayName || ''} fileId={user?.avatarFileId} size={72} />
+                <div>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
+                  <Button
+                    variant="secondary"
+                    isLoading={isUploadingAvatar}
+                    onClick={() => avatarInputRef.current?.click()}
+                  >
+                    Change photo
+                  </Button>
+                </div>
+              </div>
               <Input label="Display name" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
               <Input label="Bio" value={bio} onChange={(e) => setBio(e.target.value)} />
               <Button onClick={saveProfile} isLoading={isSaving}>
