@@ -18,7 +18,6 @@ function AttachmentPreview({ file }: { file: any }) {
   if (!url) return <div className="h-32 w-48 animate-pulse rounded-lg bg-zinc-200 dark:bg-zinc-700" />;
 
   if (kind === 'image' || kind === 'gif' || kind === 'sticker') {
-    // eslint-disable-next-line @next/next/no-img-element
     return <img src={url} alt={file.originalName} className="max-h-72 max-w-xs rounded-lg object-cover" />;
   }
   if (kind === 'video') {
@@ -27,16 +26,7 @@ function AttachmentPreview({ file }: { file: any }) {
   if (kind === 'audio' || kind === 'voice') {
     return <audio src={url} controls className="w-56" />;
   }
-  return (
-    
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-2 rounded-lg bg-black/5 px-3 py-2 text-sm underline dark:bg-white/10"
-    >
-      📄 {file.originalName}
-    </a>
-  );
+  return <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-lg bg-black/5 px-3 py-2 text-sm underline dark:bg-white/10">📄 {file.originalName}</a>;
 }
 
 export function MessageBubble({
