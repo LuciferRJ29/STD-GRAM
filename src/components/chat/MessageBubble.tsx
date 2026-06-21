@@ -28,7 +28,7 @@ function AttachmentPreview({ file }: { file: any }) {
     return <audio src={url} controls className="w-56" />;
   }
   return (
-    <a
+    
       href={url}
       target="_blank"
       rel="noopener noreferrer"
@@ -43,10 +43,12 @@ export function MessageBubble({
   message,
   isOwn,
   onReply,
+  showViews,
 }: {
   message: MessageItem;
   isOwn: boolean;
   onReply: (m: MessageItem) => void;
+  showViews?: boolean;
 }) {
   const { user } = useAuth();
   const [showActions, setShowActions] = useState(false);
@@ -121,12 +123,16 @@ export function MessageBubble({
           <div className="mt-1 flex items-center justify-end gap-1 text-[11px] text-zinc-400">
             {message.isEdited && <span>edited</span>}
             <span>{format(new Date(message.createdAt), 'HH:mm')}</span>
-            {isOwn &&
+            {showViews ? (
+              <span>👁 {message.readBy.length}</span>
+            ) : (
+              isOwn &&
               (message.readBy.length > 1 ? (
                 <CheckCheck size={14} className="text-brand-500" />
               ) : (
                 <Check size={14} />
-              ))}
+              ))
+            )}
           </div>
         </div>
 
