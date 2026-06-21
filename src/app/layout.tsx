@@ -4,10 +4,10 @@ import { ServiceWorkerRegister } from '@/components/layout/ServiceWorkerRegister
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Telegram Clone',
+  title: 'STD GRAM',
   description: 'A fast, modern messaging app',
   manifest: '/manifest.json',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Telegram Clone' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'STD GRAM' },
   icons: { icon: '/icons/icon-192.png', apple: '/icons/icon-192.png' },
 };
 
