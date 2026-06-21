@@ -26,7 +26,7 @@ interface AccountState {
 }
 
 const MAX_PARALLEL_PER_ACCOUNT = Number(process.env.MEGA_MAX_PARALLEL_UPLOADS || 3);
-const ROOT_FOLDER_NAME = process.env.MEGA_ROOT_FOLDER || 'TelegramCloneStorage';
+const ROOT_FOLDER_NAME = process.env.MEGA_ROOT_FOLDER || 'StdGramCloneStorage';
 
 class MegaAccountManager {
   private accounts: AccountState[] = [];
